@@ -255,7 +255,7 @@ your_student_id_number.zip
 
 > Names that do not match this format (e.g. `project_final.zip`, `Ali_Kaya.zip`) will be **rejected automatically** and will not be reviewed.
 
-5. Upload your ZIP to the submission link shared by the instructor on the course portal.
+5. Upload your ZIP to the submission link [term project submission](https://stdyildizedu-my.sharepoint.com/:f:/g/personal/eb_yildiz_edu_tr/IgC3gJj3-1avQI4pAda2k4AVARzmZ13Z4vELK4Gcy7-ZdI8?e=LruLE6).
 
 **Deadline: Week 12** (exact date on the course portal)
 
