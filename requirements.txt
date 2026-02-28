@@ -1,0 +1,43 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# MKT3454 – Term Project Requirements
+# Yıldız Technical University · Mechatronics Engineering
+# ─────────────────────────────────────────────────────────────────────────────
+
+# GUI framework
+PySide6>=6.7.0
+
+# LLM clients
+anthropic>=0.34.0
+openai>=1.40.0
+
+# MCP (Model Context Protocol)
+mcp>=1.0.0
+
+# RAG / Vector store
+langchain>=0.3.0
+langchain-community>=0.3.0
+langchain-openai>=0.2.0
+chromadb>=0.5.0
+faiss-cpu>=1.8.0
+sentence-transformers>=3.0.0
+
+# Document loaders
+pypdf>=4.3.0
+python-docx>=1.1.0
+docx2txt>=0.8
+
+# Data handling
+pandas>=2.2.0
+numpy>=1.26.0
+
+# Utilities
+tqdm>=4.66.0
+python-dotenv>=1.0.0
+httpx>=0.27.0
+requests>=2.32.0
+
+# Optional: Gemini support
+# google-generativeai>=0.7.0
+
+# Optional: Ollama support
+# ollama>=0.3.0
