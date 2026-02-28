@@ -1,0 +1,28 @@
+# GUI framework
+PySide6>=6.6.0
+
+# LLM / RAG orchestration
+langchain>=0.3.0
+langchain-community>=0.3.0
+langchain-openai>=0.2.0
+langchain-anthropic>=0.2.0
+
+# Vector store
+chromadb>=0.5.0
+
+# Document loaders
+pypdf>=4.0.0
+docx2txt>=0.8
+
+# Local / open-source embeddings (used when no API key is provided)
+sentence-transformers>=3.0.0
+
+# LLM provider SDKs
+openai>=1.50.0
+anthropic>=0.36.0
+
+# JSON processing used by LangChain's JSONLoader
+jq>=1.7.0
+
+# MCP (Model Context Protocol) Python SDK
+mcp>=1.0.0
