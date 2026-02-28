@@ -1,4 +1,4 @@
-# MKT3454 — Introduction to Machine Learning taught by Assoc. Prof. Ertugrul Bayraktar
+# MKT3434 — Introduction to Machine Learning taught by Assoc. Prof. Ertugrul Bayraktar
 ## Term Project: RAG & MCP Explorer
 
 **Yıldız Technical University · Mechatronics Engineering Department**
