@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
     QLabel, QComboBox, QPushButton, QTextEdit, QFileDialog,
     QListWidget, QListWidgetItem, QSplitter, QStatusBar,
     QGroupBox, QProgressBar, QTabWidget, QSizePolicy, QFrame,
-    QScrollArea, QMessageBox, QLineEdit
+    QScrollArea, QMessageBox, QLineEdit, QCheckBox
 )
 from PySide6.QtCore import Qt, QThread, Signal, QTimer, QPropertyAnimation, QEasingCurve
 from PySide6.QtGui import QFont, QIcon, QColor, QPalette, QTextCursor, QFontDatabase
@@ -50,26 +50,36 @@ class LLMWorker(QThread):
     error_occurred = Signal(str)
     finished_query = Signal(dict)   # emits monitoring metadata
 
-    def __init__(self, rag: RAGPipeline, monitor: LLMMonitor, prompt: str, model: str):
+    def __init__(self, rag: RAGPipeline, monitor: LLMMonitor, prompt: str, model: str, use_rag: bool = True):
         super().__init__()
         self.rag     = rag
         self.monitor = monitor
         self.prompt  = prompt
         self.model   = model
+        self.use_rag = use_rag
 
     def run(self):
         try:
-            logger.info(f"Query started | model={self.model} | prompt_len={len(self.prompt)}")
+            logger.info(f"Query started | model={self.model} | prompt_len={len(self.prompt)} | use_rag={self.use_rag}")
             start = datetime.datetime.now()
 
-            response, metadata = self.rag.query(
-                prompt=self.prompt,
-                model=self.model,
-                stream_callback=self.token_received.emit,
-            )
+            if self.use_rag:
+                response, metadata = self.rag.query(
+                    prompt=self.prompt,
+                    model=self.model,
+                    stream_callback=self.token_received.emit,
+                )
+            else:
+                response, metadata = self.rag.generate_text(
+                    system_prompt="You are a helpful assistant.",
+                    user_prompt=self.prompt,
+                    model=self.model,
+                    stream_callback=self.token_received.emit,
+                )
+                self.rag.set_last_retrieved_chunks([])
 
             elapsed = (datetime.datetime.now() - start).total_seconds()
-            metadata.update({"elapsed_sec": round(elapsed, 3), "model": self.model})
+            metadata.update({"elapsed_sec": round(elapsed, 3), "model": self.model, "use_rag": self.use_rag})
 
             self.monitor.record(self.prompt, response, metadata)
             self.result_ready.emit(response)
@@ -83,14 +93,17 @@ class LLMWorker(QThread):
 
 # ── Main Window ───────────────────────────────────────────────────────────────
 class MainWindow(QMainWindow):
-    # Available models – students may extend this list
+    # Available default models. "Other..." reveals a custom input field.
     MODELS = [
-        "claude-3-5-sonnet-20241022",
-        "claude-3-haiku-20240307",
         "gpt-4o",
         "gpt-4o-mini",
-        "gemini-1.5-pro",
-        "ollama/llama3",
+        "o3-mini",
+        "claude-3-7-sonnet-20250219",
+        "claude-3-5-sonnet-20241022",
+        "gemini-2.5-pro",
+        "gemini-1.5-flash",
+        "ollama/llama3.2",
+        "Other..."
     ]
 
     SUPPORTED_EXTS = [".txt", ".pdf", ".docx", ".json", ".csv", ".md", ".html"]
@@ -346,10 +359,22 @@ class MainWindow(QMainWindow):
 
         # ── Model Selection ──
         model_group = QGroupBox("Model")
+        model_group.setToolTip("Select an existing model or 'Other...' to type a custom one.")
         mg_layout = QVBoxLayout(model_group)
         self.model_combo = QComboBox()
         self.model_combo.addItems(self.MODELS)
         mg_layout.addWidget(self.model_combo)
+
+        self.custom_model_input = QLineEdit()
+        self.custom_model_input.setPlaceholderText("e.g. o1-mini, ollama/qwen2.5")
+        self.custom_model_input.setToolTip("Type custom model provider name (gpt- / claude- / o1- / gemini- / ollama/)")
+        self.custom_model_input.setVisible(False)
+        mg_layout.addWidget(self.custom_model_input)
+
+        # RAG toggle
+        self.chk_rag = QCheckBox("🎯  Enable RAG")
+        self.chk_rag.setChecked(True)
+        mg_layout.addWidget(self.chk_rag)
 
         # MCP toggle
         self.btn_mcp = QPushButton("⚡  Connect MCP Server")
@@ -431,15 +456,17 @@ class MainWindow(QMainWindow):
         ct_layout = QVBoxLayout(chat_tab)
         ct_layout.setSpacing(8)
 
+        chat_splitter = QSplitter(Qt.Vertical)
+        chat_splitter.setHandleWidth(6)
+
         # Output display
         out_group = QGroupBox("Response")
         og_layout = QVBoxLayout(out_group)
         self.output_display = QTextEdit()
         self.output_display.setReadOnly(True)
         self.output_display.setPlaceholderText("Model response will appear here…")
-        self.output_display.setMinimumHeight(300)
         og_layout.addWidget(self.output_display)
-        ct_layout.addWidget(out_group, stretch=1)
+        chat_splitter.addWidget(out_group)
 
         # Retrieved chunks display
         ctx_group = QGroupBox("Retrieved Context Chunks")
@@ -447,10 +474,9 @@ class MainWindow(QMainWindow):
         self.context_display = QTextEdit()
         self.context_display.setReadOnly(True)
         self.context_display.setPlaceholderText("Retrieved document chunks will appear here…")
-        self.context_display.setMaximumHeight(180)
         self.context_display.setStyleSheet("font-size: 11px; color: #8b949e;")
         cg_layout.addWidget(self.context_display)
-        ct_layout.addWidget(ctx_group)
+        chat_splitter.addWidget(ctx_group)
 
         # Prompt input area
         prompt_group = QGroupBox("Prompt")
@@ -460,7 +486,6 @@ class MainWindow(QMainWindow):
             "Type your question here…\n\n"
             "Tip: Your question will be answered using the indexed documents via RAG."
         )
-        self.prompt_input.setMaximumHeight(110)
         pg_layout.addWidget(self.prompt_input)
 
         btn_row = QHBoxLayout()
@@ -473,7 +498,10 @@ class MainWindow(QMainWindow):
         btn_row.addWidget(self.btn_send)
         pg_layout.addLayout(btn_row)
 
-        ct_layout.addWidget(prompt_group)
+        chat_splitter.addWidget(prompt_group)
+        chat_splitter.setSizes([450, 150, 150])
+
+        ct_layout.addWidget(chat_splitter)
         tabs.addTab(chat_tab, "💬  Chat")
 
         # ── Tab 2: Monitor ──
@@ -512,6 +540,7 @@ class MainWindow(QMainWindow):
         self.btn_clear.clicked.connect(self._clear_chat)
         self.btn_mcp.toggled.connect(self._toggle_mcp)
         self.api_key_input.editingFinished.connect(self._update_api_key)
+        self.model_combo.currentTextChanged.connect(self._on_model_changed)
 
     # ── Slots / Actions ───────────────────────────────────────────────────────
     def _add_files(self):
@@ -586,8 +615,10 @@ class MainWindow(QMainWindow):
         if not prompt:
             self._set_status("Please enter a prompt.", "warning")
             return
-        if not self.rag.is_ready():
-            self._set_status("Please build the index first.", "warning")
+            
+        use_rag = self.chk_rag.isChecked()
+        if use_rag and not self.rag.is_ready():
+            self._set_status("Please build the index first (or disable RAG).", "warning")
             return
 
         self.btn_send.setEnabled(False)
@@ -597,7 +628,15 @@ class MainWindow(QMainWindow):
         self._set_status("Querying model…", "info")
 
         model = self.model_combo.currentText()
-        self.worker = LLMWorker(self.rag, self.monitor, prompt, model)
+        if model == "Other...":
+            model = self.custom_model_input.text().strip()
+            if not model:
+                self._set_status("Please type a custom model name.", "warning")
+                self.btn_send.setEnabled(True)
+                self.progress.setVisible(False)
+                return
+
+        self.worker = LLMWorker(self.rag, self.monitor, prompt, model, use_rag)
         self.worker.token_received.connect(self._append_token)
         self.worker.result_ready.connect(self._on_result_ready)
         self.worker.error_occurred.connect(self._on_error)
@@ -657,6 +696,9 @@ class MainWindow(QMainWindow):
             self.btn_mcp.setText("⚡  Connect MCP Server")
             self.btn_mcp.setStyleSheet("")
             self._log("MCP server disconnected.")
+
+    def _on_model_changed(self, text: str):
+        self.custom_model_input.setVisible(text == "Other...")
 
     def _update_api_key(self):
         key = self.api_key_input.text().strip()
