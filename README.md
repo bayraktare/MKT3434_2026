@@ -3,6 +3,8 @@
 **Yıldız Technical University · Mechatronics Engineering Department**
 
 ---
+**SUBMISSION IS UPDATED WITH REPORT EXPLANATION**
+---
 
 > An advanced retrieval-augmented generation system in which multiple specialised LLM agents collaborate, critique, and refine responses over heterogeneous document collections — orchestrated through a dynamic control layer and extended via the Model Context Protocol.
 
@@ -402,6 +404,65 @@ Upload to the submission link on the course portal.
 **Deadline: Week 12.** All uploads are logged — only your **first** valid upload counts.
 
 ---
+## 📄 One-Page Report Guidelines
+
+You are required to submit a **1-page report ** using the provided template (named MKT3434_Project_Template.docx in the files above). The report must concisely describe your system design, implementation decisions, and experimental findings.
+
+> ⚠️ The report must be written **without using AI tools**. It should reflect your own understanding and implementation.
+
+---
+
+### **Required Structure**
+
+#### **Abstract (3–4 sentences)**
+- Briefly describe your multi-agent RAG system  
+- Mention key components (e.g., orchestrator, retriever, critic)  
+- State the main improvement over a baseline approach  
+- Include one result or observation  
+
+---
+
+#### **I. System Architecture**
+- Summarise your agent pipeline  
+- Mention any components you added, removed, or modified  
+- Highlight one design decision specific to your implementation  
+
+---
+
+#### **II. Methodology**
+- Retrieval strategy (dense / hybrid / filtering)  
+- How rules/prompts are applied  
+- Critic evaluation and retry mechanism  
+- Any modifications to the provided baseline  
+
+---
+
+#### **III. Experimental Setup**
+- Domains or datasets used  
+- Number and type of test queries (minimum 5)  
+- Evaluation criteria (e.g., faithfulness, completeness)  
+
+---
+
+#### **IV. Results & Discussion**
+- Brief comparison (e.g., baseline vs your system or ablation)  
+- What improved  
+- At least one failure case  
+
+---
+
+#### **V. Conclusion**
+- Most impactful component  
+- One limitation  
+- One possible improvement  
+
+---
+
+### **Notes**
+- Be concise and technical — avoid generic explanations  
+- Focus on **your implementation and observations**  
+- Figures/tables are optional but must fit within 1 page  
+
 
 ## 🔗 References
 
